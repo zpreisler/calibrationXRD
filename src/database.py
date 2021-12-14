@@ -40,6 +40,15 @@ class Phase(dict):
 
         return self.theta,self.intensity
 
+    def plot(self, colors='k', linestyles='solid', label='', **kwargs):
+
+        if not hasattr(self,'theta'):
+            self.get_theta()
+
+        vlines(self.theta,0,self.intensity, colors=colors, linestyles=linestyles, label=label, **kwargs)
+
+        return self
+
 class PhaseList(list):
 
     def __init__(self,*args,**kwargs):
