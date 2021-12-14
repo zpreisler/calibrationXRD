@@ -21,7 +21,7 @@ class Phase(dict):
     def __len__(self):
         return len(self['_pd_peak_intensity'][0])
 
-    def get_theta(self,l=[1.541],scale=[1.0]):
+    def get_theta(self,l=[1.541],scale=[1.0],max_theta=None,min_intensity=None):
 
         d,i = self['_pd_peak_intensity']
 
@@ -38,7 +38,13 @@ class Phase(dict):
         
         self.theta,self.intensity = array(sorted(zip(theta,intensity))).T
 
-        return self.theta,self.intensity
+        f = array([True]*len(self.theta))
+        if max_theta:
+            f &= (self.theta < max_theta) 
+        if min_intensity:
+            f &= self.intensity > min_intensity
+
+        return self.theta[f],self.intensity[f]
 
     def plot(self, colors='k', linestyles='solid', label='', **kwargs):
 
@@ -48,6 +54,27 @@ class Phase(dict):
         vlines(self.theta,0,self.intensity, colors=colors, linestyles=linestyles, label=label, **kwargs)
 
         return self
+
+class MixPhase(Phase):
+
+    def __init__(self,phases):
+        self.phases = phases
+        
+    def get_theta(self,**kwargs):
+        
+        theta = []
+        intensity = []
+        
+        for phase in self.phases:
+            x,y = phase.get_theta(**kwargs)
+            theta += [x]
+            intensity += [y]
+            
+        return concatenate(theta),concatenate(intensity)
+    
+    def _vlines(self):
+        x,y = self.get_theta()
+        return x,0,y
 
 class PhaseList(list):
 
@@ -118,3 +145,4 @@ def snip(x,m):
         a2 = (x[:(-2 * p)] + x[(2 * p):]) * 0.5
         x[p:-p] = minimum(a2,a1)
     return x
+
