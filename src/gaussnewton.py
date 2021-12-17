@@ -8,11 +8,11 @@ from scipy.signal import find_peaks
 
 class GaussNewton():
     
-    def __init__(self,phase,spectra):
+    def __init__(self,phase,spectra,max_theta = 53, min_intensity = 0.05):
         self.phase = phase
         self.spectra = spectra
         
-        self.mu,self.i = self.phase.get_theta(max_theta = 53,min_intensity = 0.05)
+        self.mu,self.i = self.phase.get_theta(max_theta = max_theta,min_intensity = min_intensity)
         
         self.n_channel = len(self.channel)
         
@@ -87,6 +87,46 @@ class GaussNewton():
 
         y = self.spectra.intensity
         dopt = self._calibration()
+        
+        dz = y - self.z
+        d = array(dopt).T
+        
+        dr = pinv(d) @ dz
+
+        new_gamma = self.gamma + dr[3:] * alpha
+        if any(new_gamma < 0):
+            f = new_gamma < 0
+            d[:,3:][:,f] = 0
+            dr = pinv(d) @ dz
+   
+        self.gamma[:] += dr[3:] * alpha
+        self.spectra.opt[:] += dr[:3] * alpha
+
+    def _calibration_nobeta(self):
+        
+        dopt = zeros((3,self.n_channel))     
+        da,dbeta,ds = dopt[:]
+        dgamma = []
+        
+        x = self.theta
+        
+        for mu,I,sigma2,gamma in zip(self.mu,self.i,
+                                     self.sigma2,self.gamma):
+            c = self.core(x,mu,sigma2)
+            h = gamma * I * c
+            
+            dgamma += [I * c]
+            
+            da += h * self.dda(self.channel,x,*self.spectra.a,*self.spectra.s,mu,sigma2)
+            ds += h * self.dds(self.channel,x,*self.spectra.a,*self.spectra.s,mu,sigma2)
+        
+        return list(dopt) + dgamma
+ 
+
+    def calibration_nobeta(self,alpha = 1):
+
+        y = self.spectra.intensity
+        dopt = self._calibration_nobeta()
         
         dz = y - self.z
         d = array(dopt).T

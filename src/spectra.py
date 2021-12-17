@@ -49,20 +49,33 @@ class Spectra():
         self.intensity = y/y.max()
         
         return self
+
+    def raw_snip(self,m = 24):
+
+        y = self.intensity
+        self.raw_snip = snip(y,m)
+        y = self.raw_intensity - self.raw_snip
+        self.intensity = y/y.max()
+        
+        return self
+ 
+    def normalize(self):
+        self.intensity /= self.intensity.max()
+        return self
     
     def convolve(self,w=24):
         off = 4 * w
         kernel = signal.windows.gaussian(2*off-1,w)
 
-        y = self.intensity
+        y = self.raw_intensity
         y_pad = pad(y,(off,off),'edge')
 
         f = fft.rfft(y_pad)
         w = fft.rfft(kernel,y_pad.shape[-1])
         y = fft.irfft(w * f)
 
-        y = y[off*2:]
-        self.intensity = y/y.max()
+        y = y[off*2:] / sum(kernel)
+        self.intensity = y#/y.max()
         
         return self
     
