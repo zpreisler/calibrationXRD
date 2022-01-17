@@ -13,6 +13,13 @@ class Spectra():
             
         self.opt = array([-1264.,51.,2061.])
         self.a,self.beta,self.s = self.opt[:,newaxis]
+
+    def from_array(self,x):
+        self.raw_intensity = x
+        self.channel = arange(1280)
+        self.intensity = self.raw_intensity/self.raw_intensity.max()
+
+        return self
     
     def read_from_file(self,file):
         
@@ -20,6 +27,8 @@ class Spectra():
         self.channel = arange(1280)
         
         self.intensity = self.raw_intensity/self.raw_intensity.max()
+
+        return self
         
     def fce_calibration(self,x,a,beta,s):
         return (arctan((x+a)/s)) * 180 / pi + beta
@@ -53,8 +62,8 @@ class Spectra():
     def raw_snip(self,m = 24):
 
         y = self.intensity
-        self.raw_snip = snip(y,m)
-        y = self.raw_intensity - self.raw_snip
+        self._raw_snip = snip(y,m)
+        y = self.raw_intensity - self._raw_snip
         self.intensity = y/y.max()
         
         return self

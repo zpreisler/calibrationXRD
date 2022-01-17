@@ -102,6 +102,8 @@ class GaussNewton():
         self.gamma[:] += dr[3:] * alpha
         self.spectra.opt[:] += dr[:3] * alpha
 
+        self.dz = sum(dz)
+
     def _calibration_nobeta(self):
         
         dopt = zeros((3,self.n_channel))     
@@ -141,6 +143,10 @@ class GaussNewton():
    
         self.gamma[:] += dr[3:] * alpha
         self.spectra.opt[:] += dr[:3] * alpha
+
+        self.gamma[self.gamma < 0] = 0.0
+
+        self.dz = sum(dz**2)
     
     def _min_gamma(self):
         
